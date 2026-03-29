@@ -41,9 +41,9 @@ export async function GET(
       .from('user_org_role')
       .select(`
         *,
-        user_profiles (
-          email,
-          created_at
+        profiles (
+          pf_email,
+          pf_created_at
         )
       `)
       .eq('uor_organizationkey', org_id)
@@ -59,9 +59,9 @@ export async function GET(
     // Format response
     const formattedMembers = members?.map((item: any) => ({
       uor_userkey: item.uor_userkey,
-      email: item.user_profiles?.email,
+      email: item.profiles?.pf_email,
       uor_role: item.uor_role,
-      user_created_at: item.user_profiles?.created_at,
+      user_created_at: item.profiles?.pf_created_at,
     })) || []
 
     return NextResponse.json({
