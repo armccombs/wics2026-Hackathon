@@ -362,7 +362,7 @@ export default function ReportsPage() {
                   No service logs yet for this client.
                 </div>
               ) : (
-                <div className="max-h-[420px] space-y-4 overflow-y-auto pr-1">
+                <div className="max-h-105 space-y-4 overflow-y-auto pr-1">
                   {selectedClientEntries.map((entry) => (
                     <div
                       key={entry.id}
@@ -405,7 +405,7 @@ export default function ReportsPage() {
 
       {/* ADD SERVICE LOG MODAL, I believe should not need to be updated for backend wiring since the wiring should happen in the value names towsrds top of file, but throwing comment just incase  */}
       {showAddLogModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/40 px-4">
+        <div className="fixed inset-z-60 flex items-center justify-center bg-slate-900/40 px-4">
           <div className="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl">
             <div className="mb-6 flex items-start justify-between gap-4">
               <div>
