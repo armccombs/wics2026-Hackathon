@@ -19,7 +19,7 @@ const NAV_ITEMS = [
   { label: "Reports", icon: FileText, route: "/reports" },
   { label: "Organizations", icon: Building2, route: "/org" },
   { label: "Programs", icon: LayoutGrid, route: "#" },
-  { label: "Settings", icon: Settings, route: "/Account" },
+  { label: "Settings", icon: Settings, route: "/account" },
 ];
 
 // navbar
