@@ -26,14 +26,16 @@ export function OrgRoleProvider({ children }: { children: React.ReactNode }) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setLoading(false); return }
 
-    const { data } = await supabase
-      .from('user_org_role')
-      .select('role')
-      .eq('user_id', user.id)
-      .eq('organization_id', oid)
-      .single()
+  const { data } = await supabase
+    .from('user_org_role')
+    .select('uor_role')
+    .eq('uor_userkey', user.id)
+    .eq('uor_organizationkey', oid)
+    .single()
 
-    setRole((data?.role as UserRole) ?? null)
+setRole((data?.uor_role as UserRole) ?? null)
+
+    setRole((data?.uor_role as UserRole) ?? null)
     setLoading(false)
   }
 
