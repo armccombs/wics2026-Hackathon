@@ -18,9 +18,9 @@ export async function GET(request: NextRequest) {
 
     // Get user's profile
     const { data: profile } = await supabase
-      .from('profiles')
+      .from('user_profiles')
       .select('*')
-      .eq('pf_id', user.id)
+      .eq('id', user.id)
       .single()
 
     // Get user's organizations with roles

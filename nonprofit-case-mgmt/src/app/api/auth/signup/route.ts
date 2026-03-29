@@ -53,17 +53,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create user profile without a role (no default organization)
-    // Generate username from email (first part before @)
-    const username = email.split('@')[0] || `user_${Date.now()}`
-    
+    // Create user profile
     const { error: profileError } = await supabase
-      .from('profiles')
+      .from('user_profiles')
       .insert([
         {
-          pf_id: authData.user.id,
-          pf_username: username,
-          pf_email: email,
+          id: authData.user.id,
+          email: email,
         },
       ])
 

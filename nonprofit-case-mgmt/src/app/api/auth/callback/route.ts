@@ -18,9 +18,9 @@ export async function GET(request: NextRequest) {
       if (user) {
         // Check if user profile exists, if not create it
         const { data: existingProfile } = await supabase
-          .from('profiles')
+          .from('user_profiles')
           .select('*')
-          .eq('pf_id', user.id)
+          .eq('id', user.id)
           .single()
 
         if (!existingProfile) {
@@ -28,11 +28,10 @@ export async function GET(request: NextRequest) {
           // Generate username from email (first part before @)
           const username = user.email?.split('@')[0] || `user_${Date.now()}`
           
-          await supabase.from('profiles').insert([
+          await supabase.from('user_profiles').insert([
             {
-              pf_id: user.id,
-              pf_username: username,
-              pf_email: user.email,
+              id: user.id,
+              email: user.email,
             },
           ])
         }

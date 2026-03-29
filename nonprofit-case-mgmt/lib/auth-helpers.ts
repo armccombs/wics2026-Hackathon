@@ -20,9 +20,9 @@ export const getCurrentUser = async (): Promise<UserProfile | null> => {
   if (!user) return null
 
   const { data: profile, error } = await supabase
-    .from('profiles')
+    .from('user_profiles')
     .select('*')
-    .eq('pf_id', user.id)
+    .eq('id', user.id)
     .single()
 
   if (error || !profile) return null
