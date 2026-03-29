@@ -1,10 +1,12 @@
 "use client";
 import { useState} from "react";
 
+import {useRouter} from "next/navigation";
+
 export default function AccountInfo() {
 
   const[popupType, setPopupType] = useState(null);
-
+  const router = useRouter();
   return (
 
 
@@ -136,9 +138,31 @@ export default function AccountInfo() {
             Update Phone Number
           </button>
 
-        </div>
+
+    
+
+
+
         </div>
 
+
+        </div>
+
+
+
+
+
+          <button
+
+          onClick={() => router.push("/dashboard")}
+
+          className="absolute
+           bottom-10 right-10 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-400"
+
+          >
+
+            Return to Dashboard
+          </button>
 
 
 
