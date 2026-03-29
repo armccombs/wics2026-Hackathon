@@ -1,6 +1,6 @@
 'use client'
-import { createContext, useContext, useEffect, useState } from 'react'
-import { createSupabaseServerClient  } from '@/lib/supabase/server'
+import { createContext, useContext, useState } from 'react'
+import { createSupabaseClient } from '@/lib/supabase/client'  
 import { type UserRole } from '@/lib/roles'
 
 interface OrgRoleContextValue {
@@ -15,25 +15,22 @@ const OrgRoleContext = createContext<OrgRoleContextValue>({
 })
 
 export function OrgRoleProvider({ children }: { children: React.ReactNode }) {
-  const supabase = createSupabaseServerClient ()
   const [orgId, setOrgId] = useState<string | null>(null)
   const [role, setRole] = useState<UserRole | null>(null)
   const [loading, setLoading] = useState(true)
 
   const fetchRole = async (oid: string) => {
     setLoading(true)
-    const supabase = await createSupabaseServerClient()
+    const supabase = createSupabaseClient()  // ← no await, not the server client
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setLoading(false); return }
 
-  const { data } = await supabase
-    .from('user_org_role')
-    .select('uor_role')
-    .eq('uor_userkey', user.id)
-    .eq('uor_organizationkey', oid)
-    .single()
-
-setRole((data?.uor_role as UserRole) ?? null)
+    const { data } = await supabase
+      .from('user_org_role')
+      .select('uor_role')
+      .eq('uor_userkey', user.id)
+      .eq('uor_organizationkey', oid)
+      .single()
 
     setRole((data?.uor_role as UserRole) ?? null)
     setLoading(false)
