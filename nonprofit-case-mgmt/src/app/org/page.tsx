@@ -16,10 +16,10 @@ import {
 // nav items
 const NAV_ITEMS = [
   { label: "Clients", icon: Users, route: "/dashboard" },
-  { label: "Reports", icon: FileText, route: "#" },
+  { label: "Reports", icon: FileText, route: "/reports" },
   { label: "Organizations", icon: Building2, route: "/org" },
   { label: "Programs", icon: LayoutGrid, route: "#" },
-  { label: "Settings", icon: Settings, route: "#" },
+  { label: "Settings", icon: Settings, route: "/Account" },
 ];
 
 // navbar
