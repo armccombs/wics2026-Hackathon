@@ -219,3 +219,153 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+
+export async function PUT(request: NextRequest) {
+  try {
+    const cookieStore = await cookies()
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() { return cookieStore.getAll() },
+          setAll(cookiesToSet) {
+            try {
+              cookiesToSet.forEach(({ name, value, options }) =>
+                cookieStore.set(name, value, options)
+              )
+            } catch {}
+          },
+        },
+      }
+    )
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const { serviceId, organizationId, staffId, date, serviceTypeId, notes } = body
+
+    if (!serviceId || !organizationId) {
+      return NextResponse.json(
+        { error: 'Missing required fields: serviceId, organizationId' },
+        { status: 400 }
+      )
+    }
+
+    // check the service belongs to this org and user has permission
+    // RLS will block the update if Staff tries to update someone else's service
+    const { data, error } = await supabase
+      .from('service')
+      .update({
+        ...(staffId && { s_staffkey: staffId }),
+        ...(date && { s_date: date }),
+        ...(serviceTypeId !== undefined && { s_servicetypekey: serviceTypeId }),
+        ...(notes !== undefined && { s_notes: notes }),
+        s_updatedby: user.id,
+        s_updatedat: new Date().toISOString(),
+      })
+      .eq('s_servicekey', serviceId)
+      .eq('s_organizationkey', organizationId)
+      .select()
+      .single()
+
+    if (error) {
+      // PGRST116 = no rows returned = RLS blocked it
+      if (error.code === 'PGRST116') {
+        return NextResponse.json(
+          { error: 'You do not have permission to update this service' },
+          { status: 403 }
+        )
+      }
+      console.error('Supabase error:', error)
+      return NextResponse.json(
+        { error: error.message || 'Failed to update service' },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json({
+      service: {
+        id: data.s_servicekey,
+        clientId: data.s_clientkey,
+        date: data.s_date,
+        serviceTypeId: data.s_servicetypekey,
+        staffId: data.s_staffkey,
+        notes: data.s_notes,
+      }
+    })
+  } catch (error) {
+    console.error('Error updating service:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const cookieStore = await cookies()
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() { return cookieStore.getAll() },
+          setAll(cookiesToSet) {
+            try {
+              cookiesToSet.forEach(({ name, value, options }) =>
+                cookieStore.set(name, value, options)
+              )
+            } catch {}
+          },
+        },
+      }
+    )
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    const serviceId = searchParams.get('service_id')
+    const organizationId = searchParams.get('org_id')
+
+    if (!serviceId || !organizationId) {
+      return NextResponse.json(
+        { error: 'Missing required fields: service_id, org_id' },
+        { status: 400 }
+      )
+    }
+
+    // RLS will block this if Staff tries to delete someone else's service
+    const { error, count } = await supabase
+      .from('service')
+      .delete({ count: 'exact' })
+      .eq('s_servicekey', serviceId)
+      .eq('s_organizationkey', organizationId)
+
+    if (error) {
+      console.error('Supabase error:', error)
+      return NextResponse.json(
+        { error: error.message || 'Failed to delete service' },
+        { status: 500 }
+      )
+    }
+
+    // if count is 0, RLS blocked it silently
+    if (count === 0) {
+      return NextResponse.json(
+        { error: 'You do not have permission to delete this service' },
+        { status: 403 }
+      )
+    }
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Error deleting service:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
