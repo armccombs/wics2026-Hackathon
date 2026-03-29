@@ -5,7 +5,6 @@
 create table if not exists public.user_profiles (
   id uuid references auth.users on delete cascade not null primary key,
   email text not null,
-  role text not null default 'staff' constraint role_check check (role in ('admin', 'staff')),
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
   unique(email)
@@ -20,31 +19,11 @@ create policy "Users can view own profile"
   on public.user_profiles for select
   using (auth.uid() = id);
 
--- Admins can view all profiles
-create policy "Admins can view all profiles"
-  on public.user_profiles for select
-  using (
-    (select role from public.user_profiles where id = auth.uid()) = 'admin'
-  );
-
--- Only admins can update roles
-create policy "Only admins can update roles"
-  on public.user_profiles for update
-  using (
-    (select role from public.user_profiles where id = auth.uid()) = 'admin'
-  )
-  with check (
-    (select role from public.user_profiles where id = auth.uid()) = 'admin'
-  );
-
--- Users can update their own profile (except role)
+-- Users can update their own profile
 create policy "Users can update own profile"
   on public.user_profiles for update
   using (auth.uid() = id)
-  with check (
-    auth.uid() = id and
-    role = (select role from public.user_profiles where id = auth.uid())
-  );
+  with check (auth.uid() = id);
 
 -- Enable realtime subscriptions (optional)
 alter publication supabase_realtime add table public.user_profiles;

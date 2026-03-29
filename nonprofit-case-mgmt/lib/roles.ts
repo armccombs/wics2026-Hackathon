@@ -1,8 +1,20 @@
-export type UserRole = 'admin' | 'staff'
+export type UserRole = 'Admin' | 'Staff'
 
 export interface UserProfile {
+  pf_id: string
+  pf_username: string
+  pf_email?: string
+  pf_first_name?: string
+  pf_last_name?: string
+  pf_phone?: string
+  pf_created_at?: string
+  pf_updated_at?: string
+}
+
+export interface UserOrgRole {
   id: string
-  email: string
+  organization_id: string
+  user_id: string
   role: UserRole
   created_at: string
   updated_at: string
@@ -20,10 +32,11 @@ export interface RolePermission {
   view_reports: boolean
   manage_users: boolean
   export_data: boolean
+  manage_organization: boolean
 }
 
 export const ROLE_PERMISSIONS: Record<UserRole, RolePermission> = {
-  admin: {
+  Admin: {
     create_clients: true,
     read_clients: true,
     update_clients: true,
@@ -35,8 +48,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermission> = {
     view_reports: true,
     manage_users: true,
     export_data: true,
+    manage_organization: true,
   },
-  staff: {
+  Staff: {
     create_clients: true,
     read_clients: true,
     update_clients: false,
@@ -48,6 +62,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermission> = {
     view_reports: false,
     manage_users: false,
     export_data: false,
+    manage_organization: false,
   },
 }
 
@@ -60,9 +75,9 @@ export const hasPermission = (
 }
 
 export const isAdmin = (role: UserRole | null | undefined): boolean => {
-  return role === 'admin'
+  return role === 'Admin'
 }
 
 export const isStaff = (role: UserRole | null | undefined): boolean => {
-  return role === 'staff' || role === 'admin'
+  return role === 'Staff' || role === 'Admin'
 }

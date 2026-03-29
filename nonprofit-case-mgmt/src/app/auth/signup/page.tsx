@@ -43,8 +43,8 @@ export default function SignupPage() {
       if (!response.ok) {
         setError(data.error || 'Failed to create account')
       } else {
-        // Account created successfully
-        router.push('/auth/login?message=Account+created+successfully')
+        // Account created successfully - redirect to org selection
+        router.push('/org')
       }
     } catch (err) {
       setError('An unexpected error occurred')

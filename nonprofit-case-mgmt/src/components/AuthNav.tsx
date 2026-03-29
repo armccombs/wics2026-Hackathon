@@ -42,9 +42,7 @@ export const AuthNav: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
         <div>
           <h1 className="text-xl font-bold">Case Management</h1>
-          <p className="text-sm text-gray-600">
-            {user.email} ({profile?.role || 'loading'})
-          </p>
+          <p className="text-sm text-gray-600">{user.email}</p>
         </div>
         <Button onClick={signOut} variant="outline">
           Sign Out

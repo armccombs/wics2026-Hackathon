@@ -18,26 +18,27 @@ export async function GET(request: NextRequest) {
       if (user) {
         // Check if user profile exists, if not create it
         const { data: existingProfile } = await supabase
-          .from('user_profiles')
+          .from('profiles')
           .select('*')
-          .eq('id', user.id)
+          .eq('pf_id', user.id)
           .single()
 
         if (!existingProfile) {
-          // Create user profile with default staff role
-          await supabase.from('user_profiles').insert([
+          // Create user profile (no default organization or role)
+          // Generate username from email (first part before @)
+          const username = user.email?.split('@')[0] || `user_${Date.now()}`
+          
+          await supabase.from('profiles').insert([
             {
-              id: user.id,
-              email: user.email,
-              role: 'staff', // Default role
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
+              pf_id: user.id,
+              pf_username: username,
+              pf_email: user.email,
             },
           ])
         }
       }
 
-      return NextResponse.redirect(new URL('/dashboard', request.url))
+      return NextResponse.redirect(new URL('/org', request.url))
     }
   }
 
