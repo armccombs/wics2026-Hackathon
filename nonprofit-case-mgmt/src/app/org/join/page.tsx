@@ -1,88 +1,118 @@
-'use client'
+"use client";
 
-import React, { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Input } from "../../components/ui/input";
+import { Button } from "../../components/ui/button";
+import { AlertCircle, CheckCircle } from "lucide-react";
 
-export default function JoinOrgPage() {
-  const [inviteCode, setInviteCode] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
-  const router = useRouter()
+export default function JoinOrganizationPage() {
+  const router = useRouter();
+  const [inviteCode, setInviteCode] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-
+  const handleJoinOrganization = async () => {
     if (!inviteCode.trim()) {
-      setError('Invite code is required')
-      return
+      setError("Please enter an invite code");
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
+    setError("");
 
     try {
-      const response = await fetch('/api/org/join', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/org/join", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ invite_code: inviteCode.trim() }),
-      })
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || 'Failed to join organization')
-      } else {
-        router.push('/dashboard')
+        setError(data.error || "Failed to join organization");
+        setLoading(false);
+        return;
       }
+
+      setSuccess(true);
+      setTimeout(() => {
+        router.push("/org");
+      }, 2000);
     } catch (err) {
-      setError('An unexpected error occurred')
-      console.error(err)
-    } finally {
-      setLoading(false)
+      setError("An error occurred while joining the organization");
+      setLoading(false);
     }
+  };
+
+  if (success) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-zinc-100 p-6">
+        <div className="w-full max-w-md rounded-xl border bg-white p-6 shadow-sm">
+          <div className="flex flex-col items-center gap-4">
+            <CheckCircle className="h-12 w-12 text-green-600" />
+            <div className="text-center">
+              <h1 className="text-lg font-semibold text-zinc-900">
+                Successfully joined!
+              </h1>
+              <p className="mt-1 text-sm text-zinc-500">
+                Redirecting you to organizations page...
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-white p-4">
-      <div className="w-full max-w-md">
-        <h1 className="text-2xl font-bold mb-6">Join Organization</h1>
+    <div className="flex min-h-screen items-center justify-center bg-zinc-100 p-6">
+      <div className="w-full max-w-md rounded-xl border bg-white p-6 shadow-sm">
+        {/* Header */}
+        <div className="mb-5">
+          <h1 className="text-lg font-semibold text-zinc-900">
+            Join Organization
+          </h1>
+          <p className="text-sm text-zinc-500">
+            Enter your invitation code to join an organization
+          </p>
+        </div>
 
+        {/* Error message */}
         {error && (
-          <div className="mb-4 p-3 bg-red-100 border border-red-400 rounded text-red-800 text-sm">
-            {error}
+          <div className="mb-4 flex items-start gap-2 rounded-md bg-red-50 px-3 py-2">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+            <p className="text-sm text-red-700">{error}</p>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block font-semibold mb-2">Invite Code</label>
-            <input
-              type="text"
-              value={inviteCode}
-              onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-              disabled={loading}
-              required
-              maxLength={16}
-              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-green-500"
-            />
-          </div>
-
-          <button
-            type="submit"
+        {/* Input and Button */}
+        <div className="flex flex-col gap-3">
+          <Input
+            placeholder="Enter invite code"
+            value={inviteCode}
+            onChange={(e) => {
+              setInviteCode(e.target.value);
+              setError("");
+            }}
+            onKeyPress={(e) => e.key === "Enter" && handleJoinOrganization()}
             disabled={loading}
-            className="w-full px-4 py-2 bg-green-600 text-white font-semibold rounded hover:bg-green-700 disabled:bg-gray-400"
-          >
-            {loading ? 'Joining...' : 'Join'}
-          </button>
-        </form>
+          />
 
-        <div className="mt-4 text-center">
-          <Link href="/org" className="text-blue-600 text-sm hover:underline">
+          <Button
+            onClick={handleJoinOrganization}
+            disabled={loading || !inviteCode.trim()}
+          >
+            {loading ? "Joining..." : "Join"}
+          </Button>
+
+          <Button variant="outline" onClick={() => router.push("/org")} disabled={loading}>
             Back
-          </Link>
+          </Button>
         </div>
       </div>
     </div>
-  )
+  );
 }
