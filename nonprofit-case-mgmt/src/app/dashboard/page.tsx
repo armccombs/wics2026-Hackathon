@@ -18,6 +18,7 @@ import {
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { ImportClientsModal } from "../components/ImportClientsModal";
+import { useRouter } from "next/navigation";
 
 import {
   Table,
@@ -45,11 +46,11 @@ export interface Client {
 // nav items
 
 const NAV_ITEMS = [
-  { label: "Clients", icon: Users },
-  { label: "Programs", icon: LayoutGrid },
-  { label: "Reports", icon: FileText },
-  { label: "Documents", icon: FolderOpen },
-  { label: "Settings", icon: Settings },
+  { label: "Clients", icon: Users, route: "/dashboard" },
+  { label: "Reports", icon: FileText, route: "/reports" },
+  { label: "Organizations", icon: FolderOpen, route: "/org" },
+  { label: "Programs", icon: LayoutGrid, route: "#" },
+  { label: "Settings", icon: Settings, route: "/Account" },
 ];
 
 // client status styling & display
@@ -418,13 +419,9 @@ function ClientTable({
 
 //nav bar
 
-function Sidebar({
-  activeNav,
-  onNav,
-}: {
-  activeNav: string;
-  onNav: (label: string) => void;
-}) {
+function Sidebar({ activeNav }: { activeNav: string }) {
+  const router = useRouter();
+
   return (
     <aside className="flex w-56 flex-col border-r bg-white">
       <div className="flex h-14 items-center border-b px-4">
@@ -434,13 +431,13 @@ function Sidebar({
       </div>
 
       <nav className="flex flex-1 flex-col gap-1 p-3">
-        {NAV_ITEMS.map(({ label, icon: Icon }) => {
+        {NAV_ITEMS.map(({ label, icon: Icon, route }) => {
           const active = activeNav === label;
 
           return (
             <button
               key={label}
-              onClick={() => onNav(label)}
+              onClick={() => route !== "#" && router.push(route)}
               className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition ${
                 active
                   ? "bg-zinc-100 text-zinc-900 font-medium"
@@ -585,7 +582,7 @@ export default function Dashboard() {
 
   return (
     <div className="flex h-screen bg-zinc-100">
-      <Sidebar activeNav={activeNav} onNav={setActiveNav} />
+      <Sidebar activeNav={activeNav} />
 
       <div className="flex flex-1 flex-col">
         <header className="flex h-14 items-center border-b bg-white px-5">
