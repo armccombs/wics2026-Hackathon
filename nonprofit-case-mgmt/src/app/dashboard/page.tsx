@@ -41,6 +41,13 @@ export interface Client {
   language?: string;
   householdSize?: number;
   gender?: string;
+
+  // added so the profile popup can use these 
+  program?: string;
+  status?: ClientStatus;
+  intakeDate?: string;
+  address?: string;
+  notes?: string;
 }
 
 // nav items
@@ -256,6 +263,179 @@ function NewClientModal({
   );
 }
 
+// pop up for client profile
+//may need backend tweaks? unsure fully
+function ClientProfileModal({
+  client,
+  onClose,
+}: {
+  client: Client;
+  onClose: () => void;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState<Client>({
+    ...client,
+    program: client.program || "",
+    status: client.status || "Active",
+    intakeDate: client.intakeDate || "",
+    address: client.address || "",
+    notes: client.notes || "",
+  });
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4 backdrop-blur-sm"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="w-full max-w-lg rounded-xl border bg-white p-6">
+        <div className="flex items-start justify-between">
+          <div>
+            {isEditing ? (
+              <input
+                className="text-lg font-semibold border rounded px-2 py-1"
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+              />
+            ) : (
+              <h2 className="text-lg font-semibold">{formData.name}</h2>
+            )}
+            <p className="text-sm text-zinc-500">ID: {formData.id}</p>
+          </div>
+
+          <button
+            onClick={onClose}
+            className="rounded-md px-2 py-1 text-zinc-400 hover:bg-zinc-100"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="mt-4 space-y-3 text-sm">
+          <div>
+            <strong>Program:</strong>{" "}
+            {isEditing ? (
+              <input
+                className="border rounded px-2 py-1 ml-2"
+                value={formData.program || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, program: e.target.value })
+                }
+              />
+            ) : (
+              formData.program || "—"
+            )}
+          </div>
+
+          <div>
+            <strong>Status:</strong>{" "}
+            {isEditing ? (
+              <select
+                className="border rounded px-2 py-1 ml-2"
+                value={formData.status || "Active"}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    status: e.target.value as ClientStatus,
+                  })
+                }
+              >
+                <option value="Active">Active</option>
+                <option value="Pending">Pending</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+            ) : (
+              <StatusBadge status={formData.status || "Active"} />
+            )}
+          </div>
+
+          <div>
+            <strong>Intake Date:</strong>{" "}
+            {isEditing ? (
+              <input
+                type="date"
+                className="border rounded px-2 py-1 ml-2"
+                value={formData.intakeDate || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, intakeDate: e.target.value })
+                }
+              />
+            ) : (
+              formData.intakeDate || "—"
+            )}
+          </div>
+
+          <div>
+            <strong>Address:</strong>{" "}
+            {isEditing ? (
+              <input
+                className="border rounded px-2 py-1 ml-2 w-full mt-1"
+                value={formData.address || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, address: e.target.value })
+                }
+              />
+            ) : (
+              formData.address || "—"
+            )}
+          </div>
+
+          <div>
+            <strong>Notes:</strong>
+            {isEditing ? (
+              <textarea
+                className="w-full mt-1 border rounded px-2 py-1"
+                rows={4}
+                value={formData.notes || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, notes: e.target.value })
+                }
+              />
+            ) : (
+              <p className="mt-1">{formData.notes || "—"}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-5 flex justify-between">
+          {!isEditing ? (
+            <Button onClick={() => setIsEditing(true)}>Edit</Button>
+          ) : (
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setFormData({
+                    ...client,
+                    program: client.program || "",
+                    status: client.status || "Active",
+                    intakeDate: client.intakeDate || "",
+                    address: client.address || "",
+                    notes: client.notes || "",
+                  });
+                  setIsEditing(false);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button onClick={() => setIsEditing(false)}>
+                Save Changes
+              </Button>
+            </div>
+          )}
+
+          <Button variant="outline" onClick={onClose}>
+            Close
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // display table with live data
 function ClientTable({
   clients,
@@ -263,6 +443,7 @@ function ClientTable({
   onImportStart,
   onExportClients,
   onExportServices,
+  onSelectClient,
   loading,
   error,
   organizationId,
@@ -272,6 +453,7 @@ function ClientTable({
   onImportStart: () => void;
   onExportClients: () => Promise<void>;
   onExportServices: () => Promise<void>;
+  onSelectClient: (client: Client) => void;
   loading: boolean;
   error: string | null;
   organizationId: string;
@@ -331,7 +513,6 @@ function ClientTable({
         </div>
       </div>
 
-      {/* Export Options */}
       <div className="flex gap-2 rounded-lg border border-zinc-200 bg-white p-3 items-center justify-between">
         <div className="text-sm text-zinc-600">
           <span className="font-medium">Export data:</span>
@@ -396,7 +577,11 @@ function ClientTable({
               </TableRow>
             ) : rows.length > 0 ? (
               rows.map((c) => (
-                <TableRow key={c.id}>
+                <TableRow
+                  key={c.id}
+                  className="cursor-pointer hover:bg-zinc-50"
+                  onClick={() => onSelectClient(c)}
+                >
                   <TableCell>{c.name}</TableCell>
                   <TableCell>{c.email || "—"}</TableCell>
                   <TableCell>{c.phone || "—"}</TableCell>
@@ -463,6 +648,7 @@ export default function Dashboard() {
   const [activeNav, setActiveNav] = useState("Clients");
   const [newClientOpen, setNewClientOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -537,7 +723,7 @@ export default function Dashboard() {
   const handleExportClients = async () => {
     try {
       const response = await fetch(
-        `/api/clients/export?org_id=${encodeURIComponent(organizationId || '')}`
+        `/api/clients/export?org_id=${encodeURIComponent(organizationId || "")}`
       );
       if (!response.ok) {
         throw new Error("Failed to export clients");
@@ -560,7 +746,7 @@ export default function Dashboard() {
   const handleExportServices = async () => {
     try {
       const response = await fetch(
-        `/api/services/export?org_id=${encodeURIComponent(organizationId || '')}`
+        `/api/services/export?org_id=${encodeURIComponent(organizationId || "")}`
       );
       if (!response.ok) {
         throw new Error("Failed to export services");
@@ -598,6 +784,7 @@ export default function Dashboard() {
                 onImportStart={() => setImportOpen(true)}
                 onExportClients={handleExportClients}
                 onExportServices={handleExportServices}
+                onSelectClient={(client) => setSelectedClient(client)}
                 loading={loading}
                 error={error}
                 organizationId={organizationId}
@@ -640,6 +827,13 @@ export default function Dashboard() {
           onClose={() => setImportOpen(false)}
           onImportSuccess={handleImportSuccess}
           organizationId={organizationId}
+        />
+      )}
+
+      {selectedClient && (
+        <ClientProfileModal
+          client={selectedClient}
+          onClose={() => setSelectedClient(null)}
         />
       )}
     </div>
