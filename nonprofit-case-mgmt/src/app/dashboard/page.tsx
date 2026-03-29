@@ -13,6 +13,7 @@ import {
   Loader2,
   Upload,
   Download,
+  Building2,
 } from "lucide-react";
 
 import { Input } from "../components/ui/input";
@@ -31,6 +32,11 @@ import {
 
 type ClientStatus = "Active" | "Inactive" | "Pending";
 
+type OrganizationOption = {
+  id: string;
+  name: string;
+};
+
 export interface Client {
   id: string;
   name: string;
@@ -42,7 +48,6 @@ export interface Client {
   householdSize?: number;
   gender?: string;
 
-  // added so the profile popup can use these 
   program?: string;
   status?: ClientStatus;
   intakeDate?: string;
@@ -51,7 +56,6 @@ export interface Client {
 }
 
 // nav items
-
 const NAV_ITEMS = [
   { label: "Clients", icon: Users, route: "/dashboard" },
   { label: "Reports", icon: FileText, route: "/reports" },
@@ -178,7 +182,9 @@ function NewClientModal({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-zinc-600">Date of Birth</label>
+            <label className="text-xs font-medium text-zinc-600">
+              Date of Birth
+            </label>
             <input
               type="date"
               value={dob}
@@ -232,7 +238,9 @@ function NewClientModal({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-zinc-600">Household Size</label>
+            <label className="text-xs font-medium text-zinc-600">
+              Household Size
+            </label>
             <input
               type="number"
               placeholder="Enter household size"
@@ -264,7 +272,6 @@ function NewClientModal({
 }
 
 // pop up for client profile
-//may need backend tweaks? unsure fully
 function ClientProfileModal({
   client,
   onClose,
@@ -294,7 +301,7 @@ function ClientProfileModal({
           <div>
             {isEditing ? (
               <input
-                className="text-lg font-semibold border rounded px-2 py-1"
+                className="border rounded px-2 py-1 text-lg font-semibold"
                 value={formData.name}
                 onChange={(e) =>
                   setFormData({ ...formData, name: e.target.value })
@@ -319,7 +326,7 @@ function ClientProfileModal({
             <strong>Program:</strong>{" "}
             {isEditing ? (
               <input
-                className="border rounded px-2 py-1 ml-2"
+                className="ml-2 border rounded px-2 py-1"
                 value={formData.program || ""}
                 onChange={(e) =>
                   setFormData({ ...formData, program: e.target.value })
@@ -334,7 +341,7 @@ function ClientProfileModal({
             <strong>Status:</strong>{" "}
             {isEditing ? (
               <select
-                className="border rounded px-2 py-1 ml-2"
+                className="ml-2 border rounded px-2 py-1"
                 value={formData.status || "Active"}
                 onChange={(e) =>
                   setFormData({
@@ -357,7 +364,7 @@ function ClientProfileModal({
             {isEditing ? (
               <input
                 type="date"
-                className="border rounded px-2 py-1 ml-2"
+                className="ml-2 border rounded px-2 py-1"
                 value={formData.intakeDate || ""}
                 onChange={(e) =>
                   setFormData({ ...formData, intakeDate: e.target.value })
@@ -372,7 +379,7 @@ function ClientProfileModal({
             <strong>Address:</strong>{" "}
             {isEditing ? (
               <input
-                className="border rounded px-2 py-1 ml-2 w-full mt-1"
+                className="ml-2 mt-1 w-full border rounded px-2 py-1"
                 value={formData.address || ""}
                 onChange={(e) =>
                   setFormData({ ...formData, address: e.target.value })
@@ -387,7 +394,7 @@ function ClientProfileModal({
             <strong>Notes:</strong>
             {isEditing ? (
               <textarea
-                className="w-full mt-1 border rounded px-2 py-1"
+                className="mt-1 w-full border rounded px-2 py-1"
                 rows={4}
                 value={formData.notes || ""}
                 onChange={(e) =>
@@ -429,6 +436,83 @@ function ClientProfileModal({
 
           <Button variant="outline" onClick={onClose}>
             Close
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// current org switcher popup
+function OrganizationSwitcherModal({
+  currentOrganization,
+  organizations,
+  onClose,
+  onConfirm,
+}: {
+  currentOrganization: OrganizationOption | null;
+  organizations: OrganizationOption[];
+  onClose: () => void;
+  onConfirm: (organizationId: string) => void;
+}) {
+  const [selectedOrganizationId, setSelectedOrganizationId] = useState(
+    currentOrganization?.id || ""
+  );
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4 backdrop-blur-sm"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="w-full max-w-md rounded-xl border border-zinc-200 bg-white shadow-xl">
+        <div className="flex items-center justify-between border-b border-zinc-100 px-6 py-4">
+          <div>
+            <h2 className="text-base font-semibold text-zinc-900">
+              Switch Organization
+            </h2>
+            <p className="text-sm text-zinc-400">
+              Choose which organization you want to view
+            </p>
+          </div>
+
+          <button
+            onClick={onClose}
+            className="rounded-md px-2 py-1 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="px-6 py-5">
+          <label className="mb-2 block text-xs font-medium text-zinc-600">
+            Organization
+          </label>
+
+          <select
+            value={selectedOrganizationId}
+            onChange={(e) => setSelectedOrganizationId(e.target.value)}
+            className="w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-zinc-400"
+          >
+            {organizations.map((org) => (
+              <option key={org.id} value={org.id}>
+                {org.name}
+              </option>
+            ))}
+          </select>
+
+          <p className="mt-3 text-xs text-zinc-400">
+            The dropdown defaults to your currently selected organization.
+          </p>
+        </div>
+
+        <div className="flex justify-end gap-2 border-t border-zinc-100 px-6 py-4">
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button onClick={() => onConfirm(selectedOrganizationId)}>
+            Switch Organization
           </Button>
         </div>
       </div>
@@ -498,11 +582,7 @@ function ClientTable({
         </div>
 
         <div className="flex gap-2">
-          <Button
-            onClick={onImportStart}
-            variant="outline"
-            className="gap-2"
-          >
+          <Button onClick={onImportStart} variant="outline" className="gap-2">
             <Download className="h-4 w-4" />
             Import CSV
           </Button>
@@ -513,7 +593,7 @@ function ClientTable({
         </div>
       </div>
 
-      <div className="flex gap-2 rounded-lg border border-zinc-200 bg-white p-3 items-center justify-between">
+      <div className="flex items-center justify-between gap-2 rounded-lg border border-zinc-200 bg-white p-3">
         <div className="text-sm text-zinc-600">
           <span className="font-medium">Export data:</span>
         </div>
@@ -551,7 +631,7 @@ function ClientTable({
 
       <div className="rounded-lg border bg-white">
         {error && (
-          <div className="p-4 bg-red-50 text-red-700 rounded-t-lg border-b">
+          <div className="rounded-t-lg border-b bg-red-50 p-4 text-red-700">
             Failed to load clients: {error}
           </div>
         )}
@@ -568,7 +648,10 @@ function ClientTable({
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={4} className="py-8 text-center text-zinc-400">
+                <TableCell
+                  colSpan={4}
+                  className="py-8 text-center text-zinc-400"
+                >
                   <div className="flex items-center justify-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin" />
                     Loading clients...
@@ -602,8 +685,7 @@ function ClientTable({
   );
 }
 
-//nav bar
-
+// nav bar
 function Sidebar({ activeNav }: { activeNav: string }) {
   const router = useRouter();
 
@@ -642,8 +724,7 @@ function Sidebar({ activeNav }: { activeNav: string }) {
   );
 }
 
-//home/main page layout
-
+// home/main page layout
 export default function Dashboard() {
   const [activeNav, setActiveNav] = useState("Clients");
   const [newClientOpen, setNewClientOpen] = useState(false);
@@ -652,7 +733,11 @@ export default function Dashboard() {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [organizations, setOrganizations] = useState<OrganizationOption[]>([]);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
+  const [organizationName, setOrganizationName] = useState("No organization");
+  const [orgSwitcherOpen, setOrgSwitcherOpen] = useState(false);
 
   // Fetch user's organization on mount
   useEffect(() => {
@@ -661,15 +746,39 @@ export default function Dashboard() {
         const response = await fetch("/api/auth/me");
         const data = await response.json();
 
-        if (!response.ok || !data.organizations || data.organizations.length === 0) {
+        if (
+          !response.ok ||
+          !data.organizations ||
+          data.organizations.length === 0
+        ) {
           setError("No organization found. Please join or create an organization.");
           setLoading(false);
           return;
         }
 
-        // Use the first organization
-        const org = data.organizations[0];
-        setOrganizationId(org.o_organizationkey);
+        // WIRE IN BACKEND:
+        // // fix when backend fields are finalized
+        const mappedOrganizations: OrganizationOption[] = data.organizations.map(
+          (org: any, index: number) => ({
+            id:
+              org.o_organizationkey ||
+              org.id ||
+              org.organizationId ||
+              `org-${index}`,
+            name:
+              org.organizationName ||
+              org.name ||
+              org.orgName ||
+              org.title ||
+              `Organization ${index + 1}`,
+          })
+        );
+
+        setOrganizations(mappedOrganizations);
+
+        const firstOrg = mappedOrganizations[0];
+        setOrganizationId(firstOrg.id);
+        setOrganizationName(firstOrg.name);
       } catch (err) {
         console.error("Failed to fetch user organization:", err);
         setError("Failed to load organization information");
@@ -766,13 +875,36 @@ export default function Dashboard() {
     }
   };
 
+  const handleOrganizationSwitch = (newOrganizationId: string) => {
+    const selectedOrg = organizations.find((org) => org.id === newOrganizationId);
+    if (!selectedOrg) return;
+
+    // WIRE IN BACKEND:
+    //call an endpoint that sets the active org on the server/session
+    setOrganizationId(selectedOrg.id);
+    setOrganizationName(selectedOrg.name);
+
+    // WIRE IN BACKEND:
+    //re-fetch extra org-specific dashboard data here
+    setOrgSwitcherOpen(false);
+  };
+
   return (
     <div className="flex h-screen bg-zinc-100">
       <Sidebar activeNav={activeNav} />
 
       <div className="flex flex-1 flex-col">
-        <header className="flex h-14 items-center border-b bg-white px-5">
+        <header className="flex h-14 items-center justify-between border-b bg-white px-5">
           <p className="text-sm font-semibold text-zinc-700">{activeNav}</p>
+
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => setOrgSwitcherOpen(true)}
+          >
+            <Building2 className="h-4 w-4" />
+            Current Organization: {organizationName}
+          </Button>
         </header>
 
         <main className="flex-1 p-5">
@@ -834,6 +966,19 @@ export default function Dashboard() {
         <ClientProfileModal
           client={selectedClient}
           onClose={() => setSelectedClient(null)}
+        />
+      )}
+
+      {orgSwitcherOpen && (
+        <OrganizationSwitcherModal
+          currentOrganization={
+            organizationId
+              ? { id: organizationId, name: organizationName }
+              : null
+          }
+          organizations={organizations}
+          onClose={() => setOrgSwitcherOpen(false)}
+          onConfirm={handleOrganizationSwitch}
         />
       )}
     </div>
