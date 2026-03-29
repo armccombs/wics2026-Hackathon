@@ -1,9 +1,10 @@
-import { createClient } from '@/lib/supabase/server'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { requirePermission } from '@/lib/rbac-server'
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient()
+    const supabase = await createSupabaseServerClient()
 
     const {
       data: { user },
@@ -79,7 +80,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient()
+    const supabase = await createSupabaseServerClient()
 
     const {
       data: { user },
@@ -176,3 +177,117 @@ export async function POST(request: NextRequest) {
     )
   }
 }
+
+export async function PUT(request: NextRequest) {
+  try {
+    const supabase = await createSupabaseServerClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const { clientId, orgId, ...updates } = body
+
+    if (!clientId || !orgId) {
+      return NextResponse.json(
+        { error: 'Missing required fields: clientId, orgId' },
+        { status: 400 }
+      )
+    }
+
+    try {
+      await requirePermission(orgId, 'update_clients')
+    } catch {
+      return NextResponse.json(
+        { error: 'You do not have permission to update clients' },
+        { status: 403 }
+      )
+    }
+
+    const { data: updatedClient, error } = await supabase
+      .from('clients')
+      .update({
+        c_fullname: updates.fullName,
+        c_DOB: updates.dob || null,
+        c_email: updates.email || null,
+        c_phone: updates.phone || null,
+        c_language: updates.language || null,
+        c_householdsize: updates.householdSize || null,
+        c_gender: updates.gender || null,
+      })
+      .eq('c_clientkey', clientId)
+      .eq('c_organizationkey', orgId)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Failed to update client:', error)
+      return NextResponse.json(
+        { error: 'Failed to update client' },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json({ success: true, client: updatedClient })
+  } catch (error) {
+    console.error('Update client error:', error)
+    return NextResponse.json(
+      { error: 'An unexpected error occurred' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const supabase = await createSupabaseServerClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    const clientId = searchParams.get('client_id')
+    const orgId = searchParams.get('org_id')
+
+    if (!clientId || !orgId) {
+      return NextResponse.json(
+        { error: 'Missing required fields: client_id, org_id' },
+        { status: 400 }
+      )
+    }
+
+    try {
+      await requirePermission(orgId, 'delete_clients')
+    } catch {
+      return NextResponse.json(
+        { error: 'You do not have permission to delete clients' },
+        { status: 403 }
+      )
+    }
+
+    const { error } = await supabase
+      .from('clients')
+      .delete()
+      .eq('c_clientkey', clientId)
+      .eq('c_organizationkey', orgId)
+
+    if (error) {
+      console.error('Failed to delete client:', error)
+      return NextResponse.json(
+        { error: 'Failed to delete client' },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Delete client error:', error)
+    return NextResponse.json(
+      { error: 'An unexpected error occurred' },
+      { status: 500 }
+    )
+  }
+}
+

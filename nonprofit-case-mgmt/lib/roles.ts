@@ -12,12 +12,9 @@ export interface UserProfile {
 }
 
 export interface UserOrgRole {
-  id: string
-  organization_id: string
-  user_id: string
-  role: UserRole
-  created_at: string
-  updated_at: string
+  uor_userkey: string
+  uor_organizationkey: string
+  uor_role: UserRole
 }
 
 export interface RolePermission {
