@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Users,
   LayoutGrid,
   FileText,
-  FolderOpen,
+  Building2,
   Settings,
   Search,
   ChevronRight,
@@ -63,14 +64,13 @@ const MOCK_CLIENTS: Client[] = [
   },
 ];
 
-// nav items
-
+//nav items, used by nav bar
 const NAV_ITEMS = [
-  { label: "Clients", icon: Users },
-  { label: "Programs", icon: LayoutGrid },
-  { label: "Reports", icon: FileText },
-  { label: "Documents", icon: FolderOpen },
-  { label: "Settings", icon: Settings },
+  { label: "Clients", icon: Users, route: "/dashboard" },
+  { label: "Reports", icon: FileText, route: "#" },
+  { label: "Organizations", icon: Building2, route: "/org" },
+  { label: "Programs", icon: LayoutGrid, route: "#" },
+  { label: "Settings", icon: Settings, route: "#" },
 ];
 
 // client status styling & display
@@ -181,16 +181,173 @@ function NewClientModal({ onClose }: { onClose: () => void }) {
   );
 }
 
+//pop up for client profile :D right now has foofoo components for editing later down
+//update once backend wired
+
+function ClientProfileModal({ client, onClose }: { client: Client; onClose: () => void }) {
+  const [isEditing, setIsEditing] = useState(false);
+
+  const [formData, setFormData] = useState(client);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4 backdrop-blur-sm"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="w-full max-w-lg rounded-xl border bg-white p-6">
+        <div className="flex items-start justify-between">
+          <div>
+            {isEditing ? (
+              <input
+                className="text-lg font-semibold border rounded px-2 py-1"
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+              />
+            ) : (
+              <h2 className="text-lg font-semibold">{client.name}</h2>
+            )}
+            <p className="text-sm text-zinc-500">ID: {client.id}</p>
+          </div>
+
+          <button
+            onClick={onClose}
+            className="rounded-md px-2 py-1 text-zinc-400 hover:bg-zinc-100"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="mt-4 space-y-3 text-sm">
+          <div>
+            <strong>Program:</strong>{" "}
+            {isEditing ? (
+              <input
+                className="border rounded px-2 py-1 ml-2"
+                value={formData.program}
+                onChange={(e) =>
+                  setFormData({ ...formData, program: e.target.value })
+                }
+              />
+            ) : (
+              client.program
+            )}
+          </div>
+
+          <div>
+            <strong>Status:</strong>{" "}
+            {isEditing ? (
+              <select
+                className="border rounded px-2 py-1 ml-2"
+                value={formData.status}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    status: e.target.value as ClientStatus,
+                  })
+                }
+              >
+                <option>Active</option>
+                <option>Pending</option>
+                <option>Inactive</option>
+              </select>
+            ) : (
+              client.status
+            )}
+          </div>
+
+          <div>
+            <strong>Intake Date:</strong>{" "}
+            {isEditing ? (
+              <input
+                type="date"
+                className="border rounded px-2 py-1 ml-2"
+                value={formData.intakeDate}
+                onChange={(e) =>
+                  setFormData({ ...formData, intakeDate: e.target.value })
+                }
+              />
+            ) : (
+              client.intakeDate
+            )}
+          </div>
+
+          <div>
+            <strong>Address:</strong>{" "}
+            {isEditing ? (
+              <input
+                className="border rounded px-2 py-1 ml-2 w-full mt-1"
+                value={formData.address}
+                onChange={(e) =>
+                  setFormData({ ...formData, address: e.target.value })
+                }
+              />
+            ) : (
+              client.address
+            )}
+          </div>
+
+          <div>
+            <strong>Notes:</strong>
+            {isEditing ? (
+              <textarea
+                className="w-full mt-1 border rounded px-2 py-1"
+                rows={4}
+                value={formData.notes}
+                onChange={(e) =>
+                  setFormData({ ...formData, notes: e.target.value })
+                }
+              />
+            ) : (
+              <p className="mt-1">{client.notes}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-5 flex justify-between">
+          {!isEditing ? (
+            <Button onClick={() => setIsEditing(true)}>Edit</Button>
+          ) : (
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setFormData(client);
+                  setIsEditing(false);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button onClick={() => setIsEditing(false)}>
+                Save Changes
+              </Button>
+            </div>
+          )}
+
+          <Button variant="outline" onClick={onClose}>
+            Close
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // display table-- to be wired into backend 
 //update quick info displayed for client based on backend demographics 
-////! WILL NEED TO BE UPDATED WHEN WIRING BACKEND !
+//! WILL NEED TO BE UPDATED WHEN WIRING BACKEND !
 
 function ClientTable({
   clients,
   onNewClient,
+  onClientClick,
 }: {
   clients: Client[];
   onNewClient: () => void;
+  onClientClick: (client: Client) => void;
 }) {
   const [query, setQuery] = useState("");
 
@@ -230,7 +387,14 @@ function ClientTable({
           <TableBody>
             {rows.map((c) => (
               <TableRow key={c.id}>
-                <TableCell>{c.name}</TableCell>
+                <TableCell>
+                  <button
+                    onClick={() => onClientClick(c)}
+                    className="font-medium hover:underline"
+                  >
+                    {c.name}
+                  </button>
+                </TableCell>
                 <TableCell>{c.program}</TableCell>
                 <TableCell>
                   <StatusBadge status={c.status} />
@@ -256,11 +420,11 @@ function ClientTable({
 
 function Sidebar({
   activeNav,
-  onNav,
 }: {
   activeNav: string;
-  onNav: (label: string) => void;
 }) {
+  const router = useRouter();
+
   return (
     <aside className="flex w-56 flex-col border-r bg-white">
       <div className="flex h-14 items-center border-b px-4">
@@ -270,13 +434,15 @@ function Sidebar({
       </div>
 
       <nav className="flex flex-1 flex-col gap-1 p-3">
-        {NAV_ITEMS.map(({ label, icon: Icon }) => {
+        {NAV_ITEMS.map(({ label, icon: Icon, route }) => {
           const active = activeNav === label;
 
           return (
             <button
               key={label}
-              onClick={() => onNav(label)}
+              onClick={() => {
+                if (route !== "#") router.push(route);
+              }}
               className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition ${
                 active
                   ? "bg-zinc-100 text-zinc-900 font-medium"
@@ -299,34 +465,36 @@ function Sidebar({
 //home/main page layout
 
 export default function Da() {
-  const [activeNav, setActiveNav] = useState("Clients");
   const [newClientOpen, setNewClientOpen] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   return (
     <div className="flex h-screen bg-zinc-100">
-      <Sidebar activeNav={activeNav} onNav={setActiveNav} />
+      <Sidebar activeNav="Clients" />
 
       <div className="flex flex-1 flex-col">
         <header className="flex h-14 items-center border-b bg-white px-5">
-          <p className="text-sm font-semibold text-zinc-700">{activeNav}</p>
+          <p className="text-sm font-semibold text-zinc-700">Clients</p>
         </header>
 
         <main className="flex-1 p-5">
-          {activeNav === "Clients" ? (
-            <ClientTable
-              clients={MOCK_CLIENTS}
-              onNewClient={() => setNewClientOpen(true)}
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center text-zinc-400">
-              {activeNav} page coming soon
-            </div>
-          )}
+          <ClientTable
+            clients={MOCK_CLIENTS}
+            onNewClient={() => setNewClientOpen(true)}
+            onClientClick={(c) => setSelectedClient(c)}
+          />
         </main>
       </div>
 
       {newClientOpen && (
         <NewClientModal onClose={() => setNewClientOpen(false)} />
+      )}
+
+      {selectedClient && (
+        <ClientProfileModal
+          client={selectedClient}
+          onClose={() => setSelectedClient(null)}
+        />
       )}
     </div>
   );
