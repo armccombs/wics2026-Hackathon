@@ -165,6 +165,20 @@ export default function AccountInfo() {
           </button>
 
 
+         <button
+
+          onClick={() => router.push("/SignOut")}
+
+          className="absolute
+           bottom-10 right-60 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-400"
+
+          >
+
+            Sign Out
+          </button>
+
+
+
 
     
 
