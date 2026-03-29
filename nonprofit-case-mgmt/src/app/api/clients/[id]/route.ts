@@ -19,7 +19,7 @@ export async function GET(
 
     // Fetch the client and verify user has access
     const { data: client, error } = await supabase
-      .from('client')
+      .from('clients')
       .select('*')
       .eq('c_clientkey', id)
       .single()
@@ -94,7 +94,7 @@ export async function PUT(
 
     // Fetch current client
     const { data: currentClient } = await supabase
-      .from('client')
+      .from('clients')
       .select('c_organizationkey')
       .eq('c_clientkey', id)
       .single()
@@ -120,7 +120,7 @@ export async function PUT(
 
     // Update the client
     const { data: updatedClient, error } = await supabase
-      .from('client')
+      .from('clients')
       .update({
         c_fullname: fullName || undefined,
         c_DOB: dob !== undefined ? dob : undefined,
@@ -183,7 +183,7 @@ export async function DELETE(
 
     // Fetch current client
     const { data: currentClient } = await supabase
-      .from('client')
+      .from('clients')
       .select('c_organizationkey')
       .eq('c_clientkey', id)
       .single()
@@ -209,7 +209,7 @@ export async function DELETE(
 
     // Delete the client
     const { error } = await supabase
-      .from('client')
+      .from('clients')
       .delete()
       .eq('c_clientkey', id)
 

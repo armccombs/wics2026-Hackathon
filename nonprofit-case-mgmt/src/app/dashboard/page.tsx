@@ -11,10 +11,13 @@ import {
   ChevronRight,
   Plus,
   Loader2,
+  Upload,
+  Download,
 } from "lucide-react";
 
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
+import { ImportClientsModal } from "../components/ImportClientsModal";
 
 import {
   Table,
@@ -256,19 +259,47 @@ function NewClientModal({
 function ClientTable({
   clients,
   onNewClient,
+  onImportStart,
+  onExportClients,
+  onExportServices,
   loading,
   error,
+  organizationId,
 }: {
   clients: Client[];
   onNewClient: () => void;
+  onImportStart: () => void;
+  onExportClients: () => Promise<void>;
+  onExportServices: () => Promise<void>;
   loading: boolean;
   error: string | null;
+  organizationId: string;
 }) {
   const [query, setQuery] = useState("");
+  const [exportingClients, setExportingClients] = useState(false);
+  const [exportingServices, setExportingServices] = useState(false);
 
   const rows = clients.filter((c) =>
     c.name.toLowerCase().includes(query.toLowerCase())
   );
+
+  const handleExportClients = async () => {
+    setExportingClients(true);
+    try {
+      await onExportClients();
+    } finally {
+      setExportingClients(false);
+    }
+  };
+
+  const handleExportServices = async () => {
+    setExportingServices(true);
+    try {
+      await onExportServices();
+    } finally {
+      setExportingServices(false);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-3">
@@ -283,10 +314,57 @@ function ClientTable({
           />
         </div>
 
-        <Button onClick={onNewClient} className="gap-2">
-          <Plus className="h-4 w-4" />
-          New Client
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={onImportStart}
+            variant="outline"
+            className="gap-2"
+          >
+            <Download className="h-4 w-4" />
+            Import CSV
+          </Button>
+          <Button onClick={onNewClient} className="gap-2">
+            <Plus className="h-4 w-4" />
+            New Client
+          </Button>
+        </div>
+      </div>
+
+      {/* Export Options */}
+      <div className="flex gap-2 rounded-lg border border-zinc-200 bg-white p-3 items-center justify-between">
+        <div className="text-sm text-zinc-600">
+          <span className="font-medium">Export data:</span>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            onClick={handleExportClients}
+            variant="outline"
+            size="sm"
+            disabled={exportingClients || clients.length === 0}
+            className="gap-2 text-xs"
+          >
+            {exportingClients ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <Upload className="h-3 w-3" />
+            )}
+            Clients
+          </Button>
+          <Button
+            onClick={handleExportServices}
+            variant="outline"
+            size="sm"
+            disabled={exportingServices}
+            className="gap-2 text-xs"
+          >
+            {exportingServices ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <Upload className="h-3 w-3" />
+            )}
+            Service Logs
+          </Button>
+        </div>
       </div>
 
       <div className="rounded-lg border bg-white">
@@ -387,6 +465,7 @@ function Sidebar({
 export default function Dashboard() {
   const [activeNav, setActiveNav] = useState("Clients");
   const [newClientOpen, setNewClientOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -454,6 +533,56 @@ export default function Dashboard() {
     setClients((prev) => [newClient, ...prev]);
   };
 
+  const handleImportSuccess = (importedClients: Client[]) => {
+    setClients((prev) => [...importedClients, ...prev]);
+  };
+
+  const handleExportClients = async () => {
+    try {
+      const response = await fetch(
+        `/api/clients/export?org_id=${encodeURIComponent(organizationId || '')}`
+      );
+      if (!response.ok) {
+        throw new Error("Failed to export clients");
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `clients_${new Date().toISOString().split("T")[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Failed to export clients:", err);
+      alert("Failed to export clients. Please try again.");
+    }
+  };
+
+  const handleExportServices = async () => {
+    try {
+      const response = await fetch(
+        `/api/services/export?org_id=${encodeURIComponent(organizationId || '')}`
+      );
+      if (!response.ok) {
+        throw new Error("Failed to export services");
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `services_${new Date().toISOString().split("T")[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Failed to export services:", err);
+      alert("Failed to export services. Please try again.");
+    }
+  };
+
   return (
     <div className="flex h-screen bg-zinc-100">
       <Sidebar activeNav={activeNav} onNav={setActiveNav} />
@@ -469,8 +598,12 @@ export default function Dashboard() {
               <ClientTable
                 clients={clients}
                 onNewClient={() => setNewClientOpen(true)}
+                onImportStart={() => setImportOpen(true)}
+                onExportClients={handleExportClients}
+                onExportServices={handleExportServices}
                 loading={loading}
                 error={error}
+                organizationId={organizationId}
               />
             ) : (
               <div className="flex h-full items-center justify-center text-zinc-400">
@@ -501,6 +634,14 @@ export default function Dashboard() {
         <NewClientModal
           onClose={() => setNewClientOpen(false)}
           onClientCreated={handleClientCreated}
+          organizationId={organizationId}
+        />
+      )}
+
+      {importOpen && organizationId && (
+        <ImportClientsModal
+          onClose={() => setImportOpen(false)}
+          onImportSuccess={handleImportSuccess}
           organizationId={organizationId}
         />
       )}
