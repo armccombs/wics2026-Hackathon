@@ -61,15 +61,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Create admin role for the creator
-    const { error: roleError } = await supabase
-      .from('user_org_role')
-      .insert([
-        {
-          uor_organizationkey: org.o_organizationkey,
-          uor_userkey: user.id,
-          uor_role: 'Admin',
-        },
-      ])
+    const { error: roleError } = await supabase.rpc('assign_org_creator_role', {
+      org_id: org.o_organizationkey})
 
     if (roleError) {
       console.error('Role creation error:', {
