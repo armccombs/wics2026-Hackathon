@@ -20,9 +20,9 @@ export const getCurrentUser = async (): Promise<UserProfile | null> => {
   if (!user) return null
 
   const { data: profile, error } = await supabase
-    .from('user_profiles')
+    .from('profiles')
     .select('*')
-    .eq('id', user.id)
+    .eq('pf_id', user.id)
     .single()
 
   if (error || !profile) return null
@@ -81,12 +81,9 @@ export const getUserRoleInOrg = async (
   if (error || !role) return null
 
   return {
-    id: organizationId,
-    organization_id: role.uor_organizationkey,
-    user_id: role.uor_userkey,
-    role: role.uor_role,
-    created_at: role.created_at,
-    updated_at: role.updated_at,
+    uor_userkey: role.uor_userkey,
+    uor_organizationkey: role.uor_organizationkey,
+    uor_role: role.uor_role,
   } as UserOrgRole
 }
 
@@ -113,7 +110,7 @@ export const requireOrgAdmin = async (
   organizationId: string
 ): Promise<UserOrgRole> => {
   const role = await requireOrgMembership(organizationId)
-  if (role.role !== 'Admin') {
+  if (role.uor_role !== 'Admin') {
     redirect('/org')
   }
   return role
