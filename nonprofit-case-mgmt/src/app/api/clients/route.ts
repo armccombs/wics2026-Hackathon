@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
 
     // Fetch clients for this organization
     const { data: clients, error } = await supabase
-      .from('client')
+      .from('clients')
       .select('*')
       .eq('c_organizationkey', orgId)
       .order('c_createdat', { ascending: false })
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
 
     // Create the client
     const { data: newClient, error } = await supabase
-      .from('client')
+      .from('clients')
       .insert([
         {
           c_fullname: fullName,
