@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     .eq('id', user.id)
     .single()
 
-  if (profile?.role !== 'admin') {
+  if (profile?.pf_id !== user.id) {
     return NextResponse.json(
       { error: 'Only admins can manage users' },
       { status: 403 }
@@ -44,9 +44,9 @@ export async function POST(request: NextRequest) {
   }
 
   const { error } = await supabase
-    .from('user_profiles')
-    .update({ role, updated_at: new Date().toISOString() })
-    .eq('id', userId)
+    .from('profiles')
+    .update({ pf_updated_at: new Date().toISOString() })
+    .eq('pf_id', userId)
 
   if (error) {
     return NextResponse.json(
@@ -71,12 +71,12 @@ export async function GET(request: NextRequest) {
 
   // Check if user is admin
   const { data: profile } = await supabase
-    .from('user_profiles')
-    .select('role')
-    .eq('id', user.id)
+    .from('profiles')
+    .select('*')
+    .eq('pf_id', user.id)
     .single()
 
-  if (profile?.role !== 'admin') {
+  if (profile?.pf_id !== user.id) {
     return NextResponse.json(
       { error: 'Only admins can view users' },
       { status: 403 }
@@ -84,8 +84,8 @@ export async function GET(request: NextRequest) {
   }
 
   const { data: users, error } = await supabase
-    .from('user_profiles')
-    .select('id, email, role, created_at, updated_at')
+    .from('profiles')
+    .select('pf_id, pf_email, pf_created_at, pf_updated_at')
 
   if (error) {
     return NextResponse.json(
