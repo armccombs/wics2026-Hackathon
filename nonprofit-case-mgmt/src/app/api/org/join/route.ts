@@ -95,10 +95,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Increment usage count
+    // Increment usage count and deactivate if max_uses reached
+    const newTimesUsed = invitation.times_used + 1
+    const shouldDeactivate = invitation.max_uses !== null && newTimesUsed >= invitation.max_uses
+
+    const updateData: any = { times_used: newTimesUsed }
+    if (shouldDeactivate) {
+      updateData.is_active = false
+    }
+
     const { error: updateError } = await supabase
       .from('org_invitations')
-      .update({ times_used: invitation.times_used + 1 })
+      .update(updateData)
       .eq('id', invitation.id)
 
     if (updateError) {

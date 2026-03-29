@@ -134,7 +134,7 @@ export function ImportClientsModal({
         <div className="flex flex-col gap-4 px-6 py-5">
           {success ? (
             <div className="rounded-md bg-emerald-50 p-4 border border-emerald-200 flex items-start gap-3">
-              <CheckCircle className="h-5 w-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+              <CheckCircle className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
               <div>
                 <p className="font-medium text-emerald-900">Import successful!</p>
                 <p className="text-sm text-emerald-800">
@@ -148,7 +148,7 @@ export function ImportClientsModal({
               {error && (
                 <div className="rounded-md bg-red-50 p-4 border border-red-200">
                   <div className="flex items-start gap-3">
-                    <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                    <AlertCircle className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
                     <div className="flex-1">
                       <p className="font-medium text-red-900">{error}</p>
                       {validationErrors.length > 0 && (
